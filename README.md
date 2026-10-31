@@ -1,396 +1,215 @@
-<div align="center">
-  <h1 align="center"> unitree_lerobot </h1>
-  <h3 align="center"> Unitree Robotics </h3>
-  <p align="center">
-    <a href="./README.md"> English </a> | <a href="./docs/README_zh.md">中文</a>
-  </p>
-    <p align="center">
-     <a href="https://discord.gg/ZwcVwxv5rq" target="_blank"><img src="https://img.shields.io/badge/-Discord-5865F2?style=flat&logo=Discord&logoColor=white" alt="Unitree LOGO"></a>
-  </p>
-</div>
+# unitree_lerobot for H2
 
-| Unitree Robotics repositories                      | link                                                                               |
-| -------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| Unitree Datasets                                   | [unitree datasets](https://huggingface.co/unitreerobotics)                         |
-| AVP Teleoperate                                    | [avp_teleoperate](https://github.com/unitreerobotics/avp_teleoperate)              |
-| Unitree Sim IsaacLab                               | [unitree_sim_isaaclab](https://github.com/unitreerobotics/unitree_sim_isaaclab)    |
-| Conversion of various versions of lerobot datasets | [any4lerobot](https://github.com/Tavish9/any4lerobot/tree/main/ds_version_convert) |
+这是一个基于宇树官方
+[unitree_lerobot](https://github.com/unitreerobotics/unitree_lerobot)
+项目改造的版本。
 
-# 🔖 Release Note
+本项目保留官方项目原有的数据转换、LeRobot 训练、策略评估、仿真验证、
+数据集回放以及多种灵巧手支持，同时增加了对 **Unitree H2 人形机器人**
+的适配，重点支持 H2 双臂和 BrainCo 五指灵巧手。
 
-### 🏷️ v0.3
+> 本仓库只发布代码、配置、机器人模型资源和部署文档，不包含训练数据、
+> 模型权重、checkpoint 或运行日志。使用者需要准备自己的数据集和策略模型。
 
-1.Update [`lerobot dataset v3.0`](https://github.com/huggingface/lerobot/blob/main/docs/source/porting_datasets_v3.mdx).
+## 功能概览
 
-2.More policy support([`pi05`](https://github.com/huggingface/lerobot/tree/main/src/lerobot/policies/pi05), [`groot`](https://github.com/huggingface/lerobot/tree/main/src/lerobot/policies/groot)).
+- Unitree 数据采集结果转换为 LeRobot 数据集
+- ACT、Diffusion、Pi0/Pi05、GR00T 等策略的训练入口
+- G1 原有的真机、仿真、离线评估和数据回放功能
+- H2 双臂 DDS 控制器和 Pinocchio/CasADi IK 求解器
+- H2 URDF 与网格资源
+- H2 + BrainCo、Unitree、Inspire 等末端执行器接口
+- H2 真机评估、仿真评估和离线策略评估
+- H2 DDS 通信诊断脚本
 
-### 🏷️ v0.2
+## 目录说明
 
-1.Add `data conversion` and `model deployment` for `brainco` and `inspire1` Dexterous hands.
-
-2.Add the functionality of `replaying the robot dataset`.
-
-3.Add `simulation environment verification` [unitree_sim_isaaclab].
-
-### 🏷️ v0.1
-
-Support `data conversion`, `model deployment`, and `real-world testing` for `G1 + Dex1 + Dex3`.
-
-# 0. 📖 Introduction
-
-This repository is used for `lerobot training validation`(Supports LeRobot datasets version 2.0 and above.) and `unitree data conversion`.
-
-`❗Tips： If you have any questions, ideas or suggestions that you want to realize, please feel free to raise them at any time. We will do our best to solve and implement them.`
-
-| Directory  | Description                                                                                              |
-| ---------- | -------------------------------------------------------------------------------------------------------- |
-| lerobot    | The code in the `lerobot repository` for training; its corresponding commit version number is `0878c68`. |
-| utils      | `unitree data processing tool `                                                                          |
-| eval_robot | `unitree real machine inference verification of the model`                                               |
-
-## H2 support
-
-This repository includes the Unitree H2 arm controller, inverse-kinematics
-solver, H2 URDF/mesh assets, BrainCo hand integration, and real-robot,
-simulation, and offline evaluation entry points:
-
-```bash
-python unitree_lerobot/eval_robot/eval_h2.py \
-  --repo_id your/dataset \
-  --arm H2 \
-  --ee brainco
+```text
+unitree_lerobot/
+├── lerobot/                         # LeRobot 子模块，训练框架
+├── unitree_lerobot/
+│   ├── eval_robot/                  # 真机/仿真评估与机器人控制
+│   │   ├── assets/h2/               # H2 URDF 和 meshes
+│   │   ├── eval_h2.py               # H2 真机策略评估
+│   │   ├── eval_h2_sim.py           # H2 仿真策略评估
+│   │   ├── eval_h2_dataset.py       # H2 离线数据集评估
+│   │   └── robot_control/           # 手臂、IK、灵巧手控制器
+│   └── utils/                       # 数据转换和公共工具
+├── test/                            # DDS 和功能诊断脚本
+├── H2_ADAPTATION_SUMMARY.md         # H2 适配细节
+└── 使用说明.md                       # 本地部署运维说明
 ```
 
-Training outputs, model weights, checkpoints, and recorded datasets are
-intentionally excluded from this repository. Users must provide their own
-dataset and trained policy before running evaluation. See
-[H2_ADAPTATION_SUMMARY.md](./H2_ADAPTATION_SUMMARY.md) and
-[使用说明.md](./使用说明.md) for the H2 workflow and deployment prerequisites.
+## 安装环境
 
-# 1. 📦 Environment Setup
-
-## 1.1 🦾 LeRobot Environment Setup
-
-The purpose of this project is to use the [LeRobot](https://github.com/huggingface/lerobot) open-source framework to train and test data collected from Unitree robots. Therefore, it is necessary to install the LeRobot-related dependencies first. The installation steps are as follows, and you can also refer to the official [LeRobot](https://github.com/huggingface/lerobot) installation guide:
+推荐 Ubuntu 22.04、Python 3.10 和 Conda：
 
 ```bash
-# Clone the source code
-git clone --recurse-submodules https://github.com/unitreerobotics/unitree_lerobot.git
+git clone --recurse-submodules \
+  https://github.com/SunYuanJie2002/unitree_lerobot_for_H2_BSD.git
+cd unitree_lerobot_for_H2_BSD
 
-# If already downloaded:
-git submodule update --init --recursive
-
-# Create a conda environment
 conda create -y -n unitree_lerobot python=3.10
 conda activate unitree_lerobot
-conda install pinocchio -c conda-forge
 
-conda install ffmpeg=7.1.1 -c conda-forge
+conda install -y pinocchio -c conda-forge
+conda install -y ffmpeg=7.1.1 -c conda-forge
 
-# Install LeRobot
-cd unitree_lerobot/lerobot && pip install -e .
-
-# Install unitree_lerobot
-cd ../../ && pip install -e .
+cd lerobot
+pip install -e .
+cd ..
+pip install -e .
 ```
 
-## 1.2 🕹️ unitree_sdk2_python
-
-For `DDS communication` on Unitree robots, some dependencies need to be installed. Follow the installation steps below:
+安装 Unitree DDS Python SDK：
 
 ```bash
 git clone https://github.com/unitreerobotics/unitree_sdk2_python.git
-cd unitree_sdk2_python  && pip install -e .
+cd unitree_sdk2_python
+pip install -e .
+pip install cyclonedds
+cd ..
 ```
 
-# 2. ⚙️ Data Collection and Conversion
-
-## 2.1 🖼️ Load Datasets
-
-If you want to directly load the dataset we have already recorded,
-Load the [`unitreerobotics/G1_Dex3_ToastedBread_Dataset`](https://huggingface.co/datasets/unitreerobotics/G1_Dex3_ToastedBread_Dataset) dataset from Hugging Face. The default download location is `~/.cache/huggingface/lerobot/unitreerobotics`. If you want to load data from a local source, please change the `root` parameter.
-
-```python
-from lerobot.datasets.lerobot_dataset import LeRobotDataset
-import tqdm
-
-episode_index = 1
-dataset = LeRobotDataset(repo_id="unitreerobotics/G1_Dex3_ToastedBread_Dataset")
-
-from_idx = dataset.meta.episodes["dataset_from_index"][episode_index]
-to_idx = dataset.meta.episodes["dataset_to_index"][episode_index]
-
-for step_idx in tqdm.tqdm(range(from_idx, to_idx)):
-    step = dataset[step_idx]
-```
-
-`visualization`
+如果仓库已经下载但子模块为空：
 
 ```bash
-cd unitree_lerobot/lerobot
-
-python src/lerobot/scripts/lerobot_dataset_viz.py \
-    --repo-id unitreerobotics/G1_Dex3_ToastedBread_Dataset \
-    --episode-index 0
+git submodule update --init --recursive
 ```
 
-## 2.2 🔨 Data Collection
+## 数据转换和训练
 
-If you want to record your own dataset. The open-source teleoperation project [avp_teleoperate](https://github.com/unitreerobotics/avp_teleoperate/tree/g1) can be used to collect data using the Unitree G1 humanoid robot. For more details, please refer to the [avp_teleoperate](https://github.com/unitreerobotics/avp_teleoperate/tree/g1) project.
+本项目不提供数据集。可以使用自己的 Unitree/遥操作数据，按照
+`utils/convert_unitree_json_to_lerobot.py` 中的配置进行转换。
 
-## 2.3 ✂️Data Processing
-
-When you finished the Data Collection step, it may be essential for you to process the data you have been collected. For example, if one of the episodes failed to complete the task, you need to delete the episode, to increase the data's quality.
-
-We have designed a data editor in this project, in order to help users process the data. Currently, it can cut off excess segments in the episodes, and delete the bad episodes.
-
-![](https://oss-global-cdn.unitree.com/static/986a520f8b444784b090a07b9efc6803_1455x1071.jpg)
-
-Before you launch the data editor, you need to install pyqt5.
+H2 BrainCo 数据使用：
 
 ```bash
-conda activate unitree_lerobot
-pip install PyQt5
-```
-
-Launch the data editor as below.
-
-```bash
-cd data_editor
-python data_editor_EN.py
-```
-
-At first, click the button `Select Dataset Path`, choose the path of your dataset. For example, at the path tree below, `test_dataset/`is the path you need to choose.
-
-```bash
-test_dataset/
-    ├── episode_0001
-    ├── episode_0003
-    ├── episode_0004
-    ├── ...
-```
-
-You can drag the red line directly to seek playback, and drag the red line with Shift on your keyboard to select the playback range, and then trim the selected range with the button `Trim Selected Range`. If you want to delete the current episode, click the button `Delete Current Episode`.
-
-## 2.4 🛠️ Data Conversion
-
-The data collected using [avp_teleoperate](https://github.com/unitreerobotics/avp_teleoperate/tree/g1) is stored in JSON format. Assuming the collected data is stored in the `$HOME/datasets/task_name`, the format is as follows
-
-```
-datasets/                               # Dataset folder
-    └── task_name /                     # Task name
-        ├── episode_0001                # First trajectory
-        │    ├──audios/                 # Audio information
-        │    ├──colors/                 # Image information
-        │    ├──depths/                 # Depth image information
-        │    └──data.json               # State and action information
-        ├── episode_0002
-        ├── episode_...
-        ├── episode_xxx
-```
-
-### 2.4.1 🔀 Sort and Rename
-
-When generating datasets for LeRobot, it is recommended to ensure that the data naming convention, starting from `episode_0`, is sequential and continuous. You can use the following script to `sort and rename` the data accordingly.
-
-```bash
-python unitree_lerobot/utils/sort_and_rename_folders.py \
-        --data_dir $HOME/datasets/task_name
-```
-
-#### 2.4.2 🔄 Conversion
-
-Convert `Unitree JSON` Dataset to `LeRobot` Format. You can define your own `robot_type` based on [ROBOT_CONFIGS](https://github.com/unitreerobotics/unitree_lerobot/blob/main/unitree_lerobot/utils/convert_unitree_json_to_lerobot.py#L154).
-
-```bash
-# --raw-dir     Corresponds to the directory of your JSON dataset
-# --repo-id     Your unique repo ID on Hugging Face Hub
-# --push_to_hub Whether or not to upload the dataset to Hugging Face Hub (true or false)
-# --robot_type  The type of the robot used in the dataset (e.g., Unitree_Z1_Single, Unitree_Z1_Dual, Unitree_G1_Dex1, Unitree_G1_Dex3, Unitree_G1_Brainco, Unitree_G1_Inspire,Unitree_G1_Dex1_Sim)
-
 python unitree_lerobot/utils/convert_unitree_json_to_lerobot.py \
-    --raw-dir $HOME/datasets \
-    --repo-id your_name/repo_task_name \
-    --robot_type Unitree_G1_Dex3 \
-    --push_to_hub
+  --raw-dir /path/to/raw_dataset \
+  --repo-id your_name/h2_task \
+  --robot_type Unitree_H2_Brainco
 ```
 
-**Node:** `Unitree_G1_Dex1_Sim` is a robot type used for data collection in unitree_sim_isaaclab
-, with the head equipped with a single-viewpoint camera.
-
-# 3. 🚀 Training
-
-[For training, please refer to the official LeRobot training example and parameters for further guidance.](https://github.com/huggingface/lerobot/tree/main/docs/source)
-
-- `Train Act Policy` [Please refer to it in detail](https://github.com/huggingface/lerobot/blob/main/docs/source/act.mdx)
+具体参数以脚本当前版本的 `--help` 输出为准：
 
 ```bash
-cd unitree_lerobot/lerobot
-
-python src/lerobot/scripts/lerobot_train.py \
-    --dataset.repo_id=unitreerobotics/G1_Dex3_ToastedBread_Dataset \
-    --policy.push_to_hub=false \
-    --policy.type=act
+python unitree_lerobot/utils/convert_unitree_json_to_lerobot.py --help
 ```
 
-- `Train Diffusion Policy` [Please refer to it in detail](https://github.com/huggingface/lerobot/blob/main/docs/source/policy_diffusion_README.md)
+训练时使用仓库内的 LeRobot 训练入口，并将 `--dataset.repo_id`、
+`--dataset.root` 和策略参数替换为自己的数据集与训练配置。例如：
 
 ```bash
-cd unitree_lerobot/lerobot
-
-python src/lerobot/scripts/lerobot_train.py\
-    --dataset.repo_id=unitreerobotics/G1_Dex3_ToastedBread_Dataset \
-    --policy.push_to_hub=false \
-    --policy.type=diffusion
+python lerobot/src/lerobot/scripts/lerobot_train.py \
+  --dataset.repo_id=your_name/h2_task \
+  --policy.type=act \
+  --output_dir=outputs/h2_act
 ```
 
-- `Train Pi0 Policy` [Please refer to it in detail](https://github.com/huggingface/lerobot/blob/main/docs/source/pi0.mdx)
+## H2 真机部署
+
+### 1. 真机部署前提
+
+1. H2 已上电并处于允许控制的状态。
+2. 运行推理的电脑与 H2 使用同一网络和 DDS domain。
+3. 机器人端图传 `image_server` 已启动。
+4. 已准备与数据集观测维度匹配的策略模型和数据集元信息。
+5. 已确认 `unitree_sdk2py`、`cyclonedds`、`pinocchio`、PyTorch 和
+   LeRobot 可以在当前 Conda 环境导入。
+
+先运行只读 DDS 诊断，不会向机器人发送控制指令：
 
 ```bash
-cd unitree_lerobot/lerobot
-
-python src/lerobot/scripts/lerobot_train.py \
-    --dataset.repo_id=unitreerobotics/G1_Dex3_ToastedBread_Dataset \
-    --policy.push_to_hub=false \
-    --policy.type=pi0
+python test/test_h2_dds_subscribe.py
 ```
 
-- `Train Pi05 Policy` [Please refer to it in detail](https://github.com/huggingface/lerobot/blob/main/docs/source/pi05.mdx)
+多网卡环境可以指定网卡：
 
 ```bash
-cd unitree_lerobot/lerobot
-
-python src/lerobot/scripts/lerobot_train.py \
-    --dataset.repo_id=unitreerobotics/G1_Dex3_ToastedBread_Dataset \
-    --policy.type=pi05 \
-    --output_dir=./outputs/pi05_training \
-    --job_name=pi05_training \
-    --policy.pretrained_path=lerobot/pi05_base \
-    --policy.compile_model=true \
-    --policy.gradient_checkpointing=true \
-    --policy.dtype=bfloat16 \
-    --policy.device=cuda \
-    --policy.push_to_hub=false
+python test/test_h2_dds_subscribe.py \
+  --iface <network_interface> \
+  --domain 0
 ```
 
-- `Train Gr00t Policy` [Please refer to it in detail](https://github.com/huggingface/lerobot/blob/main/docs/source/groot.mdx)
+### 2. 启动 H2 策略评估
+
+默认 H2 手臂控制器为 `H2`，BrainCo 五指手使用 `brainco`：
 
 ```bash
-cd unitree_lerobot/lerobot
-
-python src/lerobot/scripts/lerobot_train.py \
-    --dataset.repo_id=unitreerobotics/G1_Dex3_ToastedBread_Dataset \
-    --output_dir=./outputs/groot_training \
-    --policy.push_to_hub=false \
-    --policy.type=groot \
-    --policy.tune_diffusion_model=false \
-    --job_name=groot_training
+python unitree_lerobot/eval_robot/eval_h2.py \
+  --repo_id your_name/h2_task \
+  --root /path/to/h2_task \
+  --arm H2 \
+  --ee brainco \
+  --policy.path /path/to/pretrained_model
 ```
 
-If you want to use multi-GPU training, please refer to the details [here](https://github.com/huggingface/lerobot/blob/main/docs/source/multi_gpu_training.mdx)
+常用参数：
 
-# 4. 🤖 Real-World Testing
+| 参数 | 说明 |
+| --- | --- |
+| `--repo_id` | LeRobot 数据集仓库 ID |
+| `--root` | 本地数据集目录 |
+| `--policy.path` | 训练好的策略目录 |
+| `--arm H2` | 使用 H2 手臂控制器 |
+| `--ee brainco` | 使用 BrainCo 五指手；也支持 `dex3`、`dex1`、`inspire1` |
+| `--image_host` | 图传服务器地址 |
+| `--frequency 30` | 控制频率，默认 30 Hz |
+| `--motion` | 启用运动控制模式时使用 |
 
-To test your trained model on a real robot, you can use the eval_g1.py script located in the eval_robot folder. Here’s how to run it:
+程序初始化时会要求输入 `s`。确认机器人姿态、网络和急停条件后再输入，
+机械臂才会移动到数据集初始姿态并开始闭环推理。
 
-[To open the image_server, follow these steps](https://github.com/unitreerobotics/avp_teleoperate?tab=readme-ov-file#31-%EF%B8%8F-image-server)
+### 3. H2 离线评估
+
+不连接真机时，可以对数据集运行策略并绘制预测动作对比：
 
 ```bash
-
-# --policy.path: Specifies the path to the pre-trained model, used for evaluating the policy.
-# --repo_id: The repository ID of the dataset, used to load the dataset required for evaluation.
-# --root: The root directory path of the dataset, defaults to an empty string.
-# --episodes: The number of evaluation episodes; setting it to 0 uses the default value.
-# --frequency: The evaluation frequency (in Hz), used to control the time step of the evaluation.
-# --arm: The model of the robotic arm, (e.g., G1_29, G1_23).
-# --ee: The type of end-effector, (e.g., dex3, dex1, inspire1, brainco).
-# --visualization: Whether to enable visualization; setting it to true enables it.
-# --send_real_robot: Whether to send commands to the real robot.
-
-
-python unitree_lerobot/eval_robot/eval_g1.py  \
-    --policy.path=unitree_lerobot/lerobot/outputs/train/2025-03-25/22-11-16_diffusion/checkpoints/100000/pretrained_model \
-    --repo_id=unitreerobotics/G1_Dex3_ToastedBread_Dataset \
-    --root="" \
-    --episodes=0 \
-    --frequency=30 \
-    --arm="G1_29" \
-    --ee="dex3" \
-    --visualization=true \
-
-If you want to run inference tests in the unitree_sim_isaaclab simulation environment, please execute:
-
-# --save_data: Allows recording data while running inference. At present, this option is limited to the sim environment.
-# --task_dir: the directory where data is stored
-# --max_episodes: the maximum number of inference runs per task; if exceeded, the task is considered failed by default
-
-python unitree_lerobot/eval_robot/eval_g1_sim.py  \
-    --policy.path=unitree_lerobot/lerobot/outputs/train/2025-03-25/22-11-16_diffusion/checkpoints/100000/pretrained_model \
-    --repo_id=unitreerobotics/G1_Dex3_ToastedBread_Dataset \
-    --root="" \
-    --episodes=0 \
-    --frequency=30 \
-    --arm="G1_29" \
-    --ee="dex3" \
-    --visualization=true \
-    --save_data=false \
-    --task_dir="./data" \
-    --max_episodes=1200
-
-# If you want to evaluate the model's performance on the dataset, use the command below for testing
-python unitree_lerobot/eval_robot/eval_g1_dataset.py  \
-    --policy.path=unitree_lerobot/lerobot/outputs/train/2025-03-25/22-11-16_diffusion/checkpoints/100000/pretrained_model \
-    --repo_id=unitreerobotics/G1_Dex3_ToastedBread_Dataset \
-    --root="" \
-    --episodes=0 \
-    --frequency=30 \
-    --arm="G1_29" \
-    --ee="dex3" \
-    --visualization=true \
-    --send_real_robot=false
+python unitree_lerobot/eval_robot/eval_h2_dataset.py \
+  --repo_id your_name/h2_task \
+  --root /path/to/h2_task \
+  --policy.path /path/to/pretrained_model
 ```
 
-**Note:** If you are using the `unitree_sim_isaaclab` simulation environment, please refer to [unitree_sim_isaaclab](https://github.com/unitreerobotics/unitree_sim_isaaclab) for environment setup and usage instructions.
+### 4. H2 仿真评估
 
-# 5. 🎬 Replay Datasets On Robot
-
-This section provides instructions on how to replay datasets on the robot.
-It is useful for testing and validating the robot's behavior using pre-recorded data.
+在已配置 Unitree 仿真环境和 domain 1 的情况下：
 
 ```bash
-
-# --repo_id         Dataset repository ID on Hugging Face Hub (e.g., unitreerobotics/G1_Dex3_ToastedBread_Dataset)
-# --root            Path to the root directory of the dataset (leave empty to use the default cache path)
-# --episodes        Index of the episode to replay (e.g., 0 for the first episode)
-# --frequency       Replay frequency in Hz (e.g., 30 for 30 frames per second)
-# --arm             Type of robot arm used (e.g., G1_29, G1_23)
-# --ee              Type of end-effector used (e.g., dex3, dex1, inspire1, brainco)
-# --visualization   Enable or disable visualization during replay (true for enabling, false for disabling)
-
-python unitree_lerobot/eval_robot/replay_robot.py \
-    --repo_id=unitreerobotics/G1_Dex3_ToastedBread_Dataset \
-    --root="" \
-    --episodes=0 \
-    --frequency=30 \
-    --arm="G1_29" \
-    --ee="dex3" \
-    --visualization=true
+python unitree_lerobot/eval_robot/eval_h2_sim.py \
+  --repo_id your_name/h2_task \
+  --policy.path /path/to/pretrained_model \
+  --arm H2 \
+  --ee brainco \
+  --sim
 ```
 
-# 6. 🤔 Troubleshooting
+## H2 适配说明
 
-| Problem                                                                                                                                                                                                                                     | Solution                                                       |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
-| **Why use `LeRobot v2.0`?**                                                                                                                                                                                                                 | [Explanation](https://github.com/huggingface/lerobot/pull/461) |
-| **401 Client Error: Unauthorized** (`huggingface_hub.errors.HfHubHTTPError`)                                                                                                                                                                | Run `huggingface-cli login` to authenticate.                   |
-| **FFmpeg-related errors:** <br> Q1: `Unknown encoder 'libsvtav1'` <br> Q2: `FileNotFoundError: No such file or directory: 'ffmpeg'` <br> Q3: `RuntimeError: Could not load libtorchcodec. Likely causes: FFmpeg is not properly installed.` | Install FFmpeg: <br> `conda install -c conda-forge ffmpeg`     |
-| **Access to model `google/paligemma-3b-pt-224` is restricted.**                                                                                                                                                                             | Run `huggingface-cli login` and request access if needed.      |
+H2 适配的控制链路包括：
 
-# 7. 🙏 Acknowledgement
+- `H2_ArmController`：H2 35 电机状态和双臂 14 DOF 控制
+- H2 官方 `rt/arm_sdk` 控制话题
+- `H2_ArmIK`：基于 H2 URDF 的双臂逆运动学
+- H2 专用关节索引、阻尼/刚度参数和状态映射
+- `Unitree_H2_Brainco` 数据转换配置
 
-This code builds upon following open-source code-bases. Please visit the URLs to see the respective LICENSES (If you find these projects valuable, it would be greatly appreciated if you could give them a star rating.):
+更多关节索引、控制参数、URDF 和文件变更说明见
+[H2_ADAPTATION_SUMMARY.md](./H2_ADAPTATION_SUMMARY.md)。
 
-1. https://github.com/huggingface/lerobot
-2. https://github.com/unitreerobotics/unitree_sdk2_python
-3. https://github.com/unitreerobotics/xr_teleoperate
-4. https://github.com/unitreerobotics/unitree_sim_isaaclab
+## 安全提醒
+
+- 首次真机运行必须先执行 DDS 只读诊断。
+- 确认急停、机器人姿态和控制权限后再输入 `s`。
+- 不要直接使用未经验证的策略模型或错误的 `--root` 数据集。
+- 真机运行时保持急停装置可用，并准备随时断开控制。
+
+## 上游项目和许可证
+
+本项目基于官方
+[unitreerobotics/unitree_lerobot](https://github.com/unitreerobotics/unitree_lerobot)
+进行改造。LeRobot 子模块、Unitree SDK、机器人模型和其他第三方组件
+分别遵循其原始项目许可证；请在分发和二次开发时保留相关版权和许可证文件。
+
+本仓库的 H2 适配代码与文档遵循仓库中的许可证文件。
