@@ -1,0 +1,44 @@
+.vscode
+.venv/
+.ruff_cache
+__pycache__/
+figure.png
+unitree_sdk2_python/
+unitree_lerobot.egg-info
+
+# Local training outputs, model weights, and checkpoints
+outputs/
+unitree_lerobot/outputs/
+model/
+unitree_lerobot/model/
+**/checkpoints/
+**/training_state/
+*.safetensors
+*.pt
+*.pth
+
+# Local datasets and generated media
+dataset/
+unitree_lerobot/dataset/
+**/videos/
+**/*.mp4
+**/*.mkv
+**/*.parquet
+**/*.h5
+**/*.hdf5
+**/*.bag
+*.csv
+
+# Runtime logs and generated artifacts
+*.log
+figure_h2.png
+*.jpg
+*.png
+.pytest_cache/
+.ruff_cache/
+
+cam_high.jpg
+cam_right_wrist.jpg
+cam_left_wrist.jpg
+data/
+./data
