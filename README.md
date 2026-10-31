@@ -4,6 +4,20 @@
 [unitree_lerobot](https://github.com/unitreerobotics/unitree_lerobot)
 项目改造的版本。
 
+## 上游项目与本项目关系
+
+本项目不是独立原创项目，而是基于官方
+[unitreerobotics/unitree_lerobot](https://github.com/unitreerobotics/unitree_lerobot)
+进行二次开发和 H2 适配。感谢官方项目提供的数据转换、LeRobot 训练、
+策略评估、仿真验证和 Unitree 机器人支持基础。
+
+- **官方上游仓库**：
+  [unitreerobotics/unitree_lerobot](https://github.com/unitreerobotics/unitree_lerobot)
+- **本项目仓库**：
+  [unitree_lerobot_for_H2_BSD](https://github.com/SunYuanJie2002/unitree_lerobot_for_H2_BSD)
+- **LeRobot 官方项目**：
+  [huggingface/lerobot](https://github.com/huggingface/lerobot)
+
 本项目保留官方项目原有的数据转换、LeRobot 训练、策略评估、仿真验证、
 数据集回放以及多种灵巧手支持，同时增加了对 **Unitree H2 人形机器人**
 的适配，重点支持 H2 双臂和 BrainCo 五指灵巧手。
@@ -205,11 +219,11 @@ H2 适配的控制链路包括：
 - 不要直接使用未经验证的策略模型或错误的 `--root` 数据集。
 - 真机运行时保持急停装置可用，并准备随时断开控制。
 
-## 上游项目和许可证
+## 许可证与致谢
 
 本项目基于官方
 [unitreerobotics/unitree_lerobot](https://github.com/unitreerobotics/unitree_lerobot)
-进行改造。LeRobot 子模块、Unitree SDK、机器人模型和其他第三方组件
+进行二次开发。LeRobot、Unitree SDK、机器人模型和其他第三方组件
 分别遵循其原始项目许可证；请在分发和二次开发时保留相关版权和许可证文件。
 
 本仓库的 H2 适配代码与文档遵循仓库中的许可证文件。
