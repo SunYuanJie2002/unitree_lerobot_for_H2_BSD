@@ -26,7 +26,7 @@
 
 ```text
 unitree_lerobot/
-├── lerobot/                         # LeRobot 子模块，训练框架
+├── lerobot/                         # 基于官方 LeRobot 的本地训练源码
 ├── unitree_lerobot/
 │   ├── eval_robot/                  # 真机/仿真评估与机器人控制
 │   │   ├── assets/h2/               # H2 URDF 和 meshes
@@ -97,7 +97,7 @@ python unitree_lerobot/utils/convert_unitree_json_to_lerobot.py \
 python unitree_lerobot/utils/convert_unitree_json_to_lerobot.py --help
 ```
 
-训练时使用仓库内的 LeRobot 训练入口，并将 `--dataset.repo_id`、
+训练时使用仓库内的 LeRobot 训练入口（包含本地训练脚本和必要的扩展），并将 `--dataset.repo_id`、
 `--dataset.root` 和策略参数替换为自己的数据集与训练配置。例如：
 
 ```bash
